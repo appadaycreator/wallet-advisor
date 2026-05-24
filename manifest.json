@@ -1,0 +1,8 @@
+{
+  "name": "Wallet Advisor",
+  "short_name": "wallet-advis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1"
+}
