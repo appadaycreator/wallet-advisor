@@ -1,8 +1,9 @@
 {
   "name": "Wallet Advisor",
   "short_name": "wallet-advis",
-  "start_url": "/",
+  "start_url": "/wallet-advisor/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366f1"
+  "theme_color": "#6366f1",
+  "scope": "/wallet-advisor/"
 }
