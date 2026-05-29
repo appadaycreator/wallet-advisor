@@ -69,6 +69,18 @@ j=d.createElement(s),dl=l!="dataLayer"?"&l="+l:"";j.async=true;j.src=
             .result-value { font-size: 28px; }
         }
         /* ── サービス固有CSS ── */
+        .quiz-opt { width:100%; padding:12px 14px; margin-bottom:8px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; cursor:pointer; background:#fff; text-align:left; transition:border-color .15s, background .15s; }
+        .quiz-opt:hover { border-color:#7c3aed; background:#f5f3ff; }
+        .quiz-opt:active { transform:scale(0.99); background:#ede9fe; }
+        .quiz-opt:focus-visible { outline:3px solid #7c3aed; outline-offset:2px; }
+        .quiz-opt.selected { border-color:#7c3aed; background:#ede9fe; color:#7c3aed; font-weight:600; }
+        .quiz-opt.selected::before { content:'✓ '; }
+        .back-btn { background:none; border:1px solid #e5e7eb; color:#666; padding:8px 16px; border-radius:8px; font-size:13px; cursor:pointer; margin-bottom:12px; width:auto !important; min-height:40px; }
+        .back-btn:hover { border-color:#7c3aed; color:#7c3aed; }
+        .result-share { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+        .result-share a { padding:8px 16px; border-radius:8px; font-size:13px; text-decoration:none; font-weight:600; min-height:44px; display:inline-flex; align-items:center; color:white; }
+        .answer-summary { margin-top:16px; padding:12px; background:#f8fafc; border-radius:10px; font-size:13px; color:#555; }
+        .answer-summary ul { padding-left:16px; margin-top:6px; line-height:1.9; }
 
     
 @media print{
@@ -97,7 +109,7 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
     <header class="site-header" role="banner">
         <div class="emoji" aria-hidden="true">👛</div>
         <h1>財布選び診断</h1>
-        <p>ライフスタイル・キャッシュレス度・収納したいカード枚数から最適な財布の形・素...</p>
+        <p>ライフスタイル・キャッシュレス度・収納したいカード枚数から最適な財布の形・素材・ブランドを診断。</p>
     </header>
 
     <main id="main-content" class="container" role="main" aria-label="財布選び診断のメインコンテンツ">
@@ -106,11 +118,12 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
 
         <div class="card" id="quiz-start">
           <h2 style="font-size:18px;font-weight:700;margin-bottom:12px;">👛 財布選び診断</h2>
-          <p style="color:#666;font-size:14px;margin-bottom:8px;">ライフスタイル・キャッシュレス度・収納したいカード枚数から最適な財布の形・素...</p>
+          <p style="color:#666;font-size:14px;margin-bottom:8px;">ライフスタイル・キャッシュレス度・収納したいカード枚数から最適な財布の形・素材・ブランドを診断。</p>
           <ul style="font-size:13px;color:#94a3b8;margin:0 0 16px 16px;"><li>質問数：5問</li><li>所要時間：約1分</li></ul>
           <button class="btn" onclick="startQuiz()">診断スタート →</button>
         </div>
         <div id="quiz-area" style="display:none;">
+          <button class="back-btn" id="back-btn" onclick="goBack()" style="display:none;">← 前の質問へ</button>
           <div style="font-size:12px;color:#999;margin-bottom:8px;">
             質問 <span id="q-num">1</span> / <span id="q-total">5</span>
           </div>
@@ -124,7 +137,12 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
           <div class="card">
             <h3 id="r-title" style="font-size:18px;font-weight:700;margin-bottom:8px;color:#7c3aed;"></h3>
             <p id="r-desc" style="color:#444;font-size:14px;line-height:1.7;"></p>
-            <button class="btn" style="margin-top:16px;" onclick="location.reload()">もう一度診断</button>
+            <div id="r-summary" class="answer-summary" style="display:none;">
+              <strong style="font-size:13px;color:#374151;">📝 あなたの回答：</strong>
+              <ul id="r-summary-list"></ul>
+            </div>
+            <div class="result-share" id="r-share"></div>
+            <button class="btn" style="margin-top:16px;" onclick="location.reload()">もう一度診断する</button>
           </div>
         </div>
 
@@ -195,7 +213,7 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
         </div>
     </main>
 
-    <footer style="text-align:center;padding:20px;color:white;font-size:12px;opacity:0.75;margin-top:8px;">
+    <footer style="text-align:center;padding:20px;color:white;font-size:12px;background:#374151;margin-top:8px;">
         <p><a href="https://appadaycreator.github.io/" style="color:white;">AppADayCreator</a>
         | <a href="privacy-policy.html" style="color:white;">プライバシーポリシー</a>
         | <a href="terms.html" style="color:white;">利用規約</a>
@@ -222,26 +240,34 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
     function getResult(answers) {
       const scores = [0,0,0,0,0];
       const a = answers.map(x => x.idx);
+      // Q1: キャッシュレス度
       if(a[0]===0) scores[0]+=3;
       if(a[0]===1) { scores[0]+=1; scores[1]+=2; }
       if(a[0]===2) { scores[1]+=1; scores[2]+=1; }
       if(a[0]===3) scores[2]+=3;
+      // Q2: カード枚数
       if(a[1]===0) scores[0]+=3;
       if(a[1]===1) { scores[1]+=2; scores[3]+=1; }
       if(a[1]===2) { scores[4]+=2; scores[2]+=1; }
       if(a[1]===3) scores[2]+=3;
+      // Q3: 重視ポイント
       if(a[2]===0) scores[0]+=2;
       if(a[2]===1) scores[2]+=3;
       if(a[2]===2) { scores[2]+=1; scores[1]+=1; }
       if(a[2]===3) { scores[1]+=1; scores[4]+=1; }
+      // Q4: 服装スタイル
       if(a[3]===0) { scores[1]+=1; scores[2]+=1; }
       if(a[3]===1) { scores[3]+=1; scores[1]+=1; }
       if(a[3]===2) scores[3]+=2;
       if(a[3]===3) { scores[0]+=1; scores[4]+=1; }
+      // Q5: 予算（修正: 未使用だったバグを修正）
+      if(a[4]===0) { scores[0]+=2; scores[3]+=1; }                     // 3,000円以下→ミニマリスト・スマートウォレット
+      if(a[4]===1) { scores[1]+=2; scores[4]+=1; scores[3]+=1; }       // 3,000〜10,000円→二つ折り・L字・スマート
+      if(a[4]===2) { scores[1]+=1; scores[4]+=2; scores[2]+=1; }       // 1〜3万円→L字・二つ折り・長財布
+      if(a[4]===3) { scores[2]+=3; scores[1]+=1; }                     // 3万円以上→長財布・二つ折りブランド品
       const best = scores.indexOf(Math.max(...scores));
       return RESULTS[best];
     }
-    // ★以下変更不要★
     const BTN='#7c3aed'; let cur=0; const ans=[];
     document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('q-total').textContent=QUESTIONS.length; });
     function startQuiz(){ cur=0;ans.length=0; document.getElementById('quiz-start').style.display='none'; document.getElementById('quiz-area').style.display='block'; document.getElementById('result').classList.remove('show'); renderQ(); }
@@ -250,15 +276,44 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
       document.getElementById('q-num').textContent=cur+1;
       document.getElementById('q-bar').style.width=((cur+1)/QUESTIONS.length*100)+'%';
       document.getElementById('q-text').textContent=q.text;
-      document.getElementById('q-options').innerHTML=q.opts.map((o,i)=>`<button onclick="answer(${i})" style="width:100%;padding:12px;margin-bottom:8px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;cursor:pointer;background:#fff;text-align:left;">${o}</button>`).join('');
+      document.getElementById('q-options').innerHTML=q.opts.map((o,i)=>`<button class="quiz-opt" data-ux-skip onclick="answer(this,${i})">${o}</button>`).join('');
+      document.getElementById('back-btn').style.display = cur > 0 ? 'inline-block' : 'none';
     }
-    function answer(idx){ ans.push({idx}); cur++; if(cur>=QUESTIONS.length) showResult(); else renderQ(); }
+    function answer(btn, idx){
+      btn.classList.add('selected');
+      document.querySelectorAll('.quiz-opt').forEach(b => b.disabled=true);
+      setTimeout(()=>{
+        ans.push({idx, text: QUESTIONS[cur].opts[idx]});
+        cur++;
+        if(cur>=QUESTIONS.length) showResult();
+        else renderQ();
+      }, 150);
+    }
+    function goBack(){
+      if(cur <= 0) return;
+      cur--;
+      ans.splice(cur, 1);
+      renderQ();
+    }
     function showResult(){
       document.getElementById('quiz-area').style.display='none';
       const r=getResult(ans);
       document.getElementById('r-title').textContent=r.title;
       document.getElementById('r-desc').textContent=r.desc;
+      // 回答サマリー表示
+      const summaryEl = document.getElementById('r-summary');
+      const listEl = document.getElementById('r-summary-list');
+      listEl.innerHTML = ans.map((a,i)=>`<li><span style="color:#7c3aed;font-weight:600;">${QUESTIONS[i].text.replace(/^Q\d\. /,'')}</span> → ${a.text}</li>`).join('');
+      summaryEl.style.display = 'block';
+      // 結果直後にシェアボタン生成
+      const title = encodeURIComponent('財布選び診断の結果：' + r.title + ' #財布選び #無料ツール');
+      const url = encodeURIComponent('https://appadaycreator.com/wallet-advisor/');
+      document.getElementById('r-share').innerHTML =
+        `<a href="https://twitter.com/intent/tweet?text=${title}&url=${url}" target="_blank" rel="noopener" aria-label="結果をXでシェア" style="background:#1DA1F2;">𝕏 結果をシェア</a>` +
+        `<a href="https://line.me/R/msg/text/?${title}%0A${url}" target="_blank" rel="noopener" aria-label="結果をLINEでシェア" style="background:#00B900;">LINE</a>`;
       document.getElementById('result').classList.add('show');
+      // 結果へスクロール（classListの変更はMutationObserverで検知されないため直接実行）
+      setTimeout(()=>{ document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
     }
     </script>
 <script id="ux-behavior">
@@ -266,7 +321,8 @@ select,input[type=text],input[type=number],input[type=email],textarea{min-height
 'use strict';
 function init(){
   // ローディング状態
-  document.querySelectorAll('button:not([type=reset]):not([data-ux]),input[type=submit]').forEach(function(b){
+  // quiz-optとdata-ux-skipはクイズ用ボタン（即時遷移）のためローディング処理対象外
+  document.querySelectorAll('button:not([type=reset]):not([data-ux]):not(.quiz-opt):not([data-ux-skip]),input[type=submit]').forEach(function(b){
     b.dataset.ux='1';
     var orig=b.tagName==='BUTTON'?b.textContent:(b.value||'実行');
     b.addEventListener('click',function(){
